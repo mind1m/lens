@@ -18,6 +18,9 @@ def shape_to_np(shape):
     return coords
 
 
+FAST_FACE_WIDTH = 120  # px, dlib can detect min 80 px width
+
+
 class FaceMapper:
 
     # readable name tp dlib landmark index
@@ -60,11 +63,25 @@ class Face:
         self._img = img
         self._det = None
         self.mapper = None
+        self.fast_detected = False
 
+    @classmethod
+    def from_frame(cls, img, prev_face=None):
+        face = cls(img)
         start_t = time.time()
-        self._det = self._detect_face(img)
-        self._detect_landmarks()
+
+        if prev_face:
+            print('Attempting fast detection...')
+            face._det = face._detect_face_fast(img, prev_face)
+
+        if not face._det:
+            # if we did not detect a face fast
+            print('Attempting slow detection...')
+            face._det = face._detect_face(img)
+
+        face._detect_landmarks()
         print('Processed face in {} sec'.format(time.time() - start_t))
+        return face
 
     def _detect_face(self, img):
         dets = detector(img, 0)
@@ -76,6 +93,46 @@ class Face:
             return None
 
         return dets[0]
+
+    def _detect_face_fast(self, img, prev_face):
+        # we want to use prev face detection to crop the image
+        # and speed up processing
+        if not prev_face.det:
+            return None
+
+        orig_img = img.copy()  # for debug
+        img = img.copy()
+
+        # pad a bit so we leave some wiggle room
+        pad_horiz = int(prev_face.det.width() * 0.2)
+        pad_vert = int(prev_face.det.height() * 0.2)
+        x1 = max(prev_face.det.left() - pad_horiz, 0)
+        y1 = max(prev_face.det.top() - pad_vert, 0)
+        x2 = min(prev_face.det.right() + pad_horiz, img.shape[1])
+        y2 = min(prev_face.det.bottom() + pad_vert, img.shape[0])
+        # crop the face out of image
+        img = img[y1:y2, x1:x2]
+
+        # resize to be smaller and faster to process
+        scale = FAST_FACE_WIDTH / img.shape[1]
+        width = int(img.shape[1] * scale)
+        height = int(img.shape[0] * scale)
+        img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+
+        # now we can invoke regular face detection on a smaller image
+        det = self._detect_face(img)
+        if not det:
+            return None
+
+        # need to map coordinates back to original frame
+        orig_left = x1 + int(det.left() / scale)
+        orig_top = y1 + int(det.top() / scale)
+        orig_right = orig_left + int(det.width() / scale)
+        orig_bottom = orig_top + int(det.height() / scale)
+
+        det = dlib.rectangle(orig_left, orig_top, orig_right, orig_bottom)
+        self.fast_detected = True
+        return det
 
     def _detect_landmarks(self):
         if not self._det:
@@ -99,3 +156,9 @@ class Face:
             self.mapper.debug_draw(img)
 
         return img
+
+    @property
+    def det(self):
+        if not self._det:
+            raise ValueError('Face not detected')
+        return self._det

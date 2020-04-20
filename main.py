@@ -1,6 +1,7 @@
 import cv2
 import time
 
+from scene import Scene
 from face import Face
 from lenses import GlassesLens
 from processor import Processor
@@ -21,10 +22,12 @@ def main_one():
 
 ASYNC = False
 
+
 def main_cam():
+    # I have some webcam plugins, so it is 2, in most cases 0
     cam = cv2.VideoCapture(2)
     processor = Processor()
-    glasses_lense = GlassesLens()
+    scene = Scene()
 
     frames_t = []  # timestamp of each frame
 
@@ -35,8 +38,7 @@ def main_cam():
             processor.feed_frame(img)
             img = processor.get_frame(blocking=False)
         else:
-            face = Face(img)
-            img = glasses_lense.overlay(face)
+            img = scene.process_frame(img)
 
         # FPS
         cur_t = time.time()
@@ -57,7 +59,6 @@ def main_cam():
     cam.release()
     processor.stop()
     cv2.destroyAllWindows()
-
 
 
 if __name__ == '__main__':
