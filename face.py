@@ -1,6 +1,5 @@
 import cv2
 import dlib
-import time
 
 from landmarks import LandmarksMap
 
@@ -23,19 +22,15 @@ class Face:
     @classmethod
     def from_frame(cls, img, prev_face=None):
         face = cls(img)
-        start_t = time.time()
 
         if prev_face:
-            print('Attempting fast detection...')
             face._det = face._detect_face_fast(img, prev_face)
 
         if not face._det:
             # if we did not detect a face fast
-            print('Attempting slow detection...')
             face._det = face._detect_face(img)
 
         face._detect_landmarks()
-        print('Processed face in {} sec'.format(time.time() - start_t))
         return face
 
     def _detect_face(self, img):
@@ -114,5 +109,5 @@ class Face:
     @property
     def det(self):
         if not self._det:
-            raise ValueError('Face not detected')
+            return None
         return self._det

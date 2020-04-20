@@ -56,6 +56,8 @@ def smooth_landmarks(landmarks_maps):
     # take landmarks_maps and produce smoothed LandmarksMap
     # to avoid wiggling
 
+    rapid_movement = False
+
     # initialize the list of (x, y)-coordinates
     coords = np.zeros((LANDMARKS_COUNT, 2), dtype='int')
 
@@ -71,6 +73,7 @@ def smooth_landmarks(landmarks_maps):
             coords[ld_idx, :] = np.mean(l_coords, axis=0)
         else:
             # rapid movement, average last couple
-            coords[ld_idx, :] = np.mean(l_coords[-2:-1, :], axis=0)
+            rapid_movement = True
+            coords[ld_idx, :] = np.mean(l_coords[-3:-1, :], axis=0)
 
-    return LandmarksMap(coords)
+    return LandmarksMap(coords), rapid_movement

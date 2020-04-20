@@ -2,43 +2,21 @@ import cv2
 import time
 
 from scene import Scene
-from face import Face
-from lenses import GlassesLens
-from processor import Processor
-
-
-def main_one():
-    img = cv2.imread('/Users/anton.kasyanov/Desktop/pic.jpg')
-
-    face = Face(img)
-
-    glasses_lense = GlassesLens()
-    img = glasses_lense.overlay(face)
-
-    cv2.imshow('preview', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-ASYNC = False
 
 
 def main_cam():
     # I have some webcam plugins, so it is 2, in most cases 0
     cam = cv2.VideoCapture(2)
-    processor = Processor()
     scene = Scene()
 
-    frames_t = []  # timestamp of each frame
+    frames_t = []  # timestamp of last frames, for fps counter
 
     while True:
-        ret, img = cam.read()
+        # get frame
+        _, img = cam.read()
 
-        if ASYNC:
-            processor.feed_frame(img)
-            img = processor.get_frame(blocking=False)
-        else:
-            img = scene.process_frame(img)
+        # process - main thing here
+        img = scene.process_frame(img)
 
         # FPS
         cur_t = time.time()
@@ -51,16 +29,14 @@ def main_cam():
             (255, 255, 0), 2
         )
 
+        # display
         cv2.imshow('preview', img)
-
         if cv2.waitKey(1) == 27:
             break  # esc to quit
 
     cam.release()
-    processor.stop()
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
-    # main_one()
     main_cam()
