@@ -3,12 +3,13 @@ import cv2
 from scene import Scene
 from lenses import GlassesLens, LightningLens, ClownNoseLens
 from cam_utils import open_cam, FPSTracker
+from lenses_3d import Base3DLens
 
 
 def main():
     cam = open_cam()
     # send a list of lenses to apply to the Scene
-    scene = Scene([LightningLens, GlassesLens])
+    scene = Scene([Base3DLens])
     fps = FPSTracker()
 
     while True:
@@ -16,7 +17,7 @@ def main():
         _, img = cam.read()
 
         # process - main thing here
-        img = scene.process_frame(img, debug=False)
+        img = scene.process_frame(img, debug=True)
 
         # FPS
         fps.count_and_draw(img)
