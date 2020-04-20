@@ -80,13 +80,13 @@ def smooth_landmarks(landmarks_maps):
         for map_idx, lm in enumerate(landmarks_maps):
             l_coords[map_idx, :] = lm.coords[ld_idx, :]
 
-        std = np.mean(np.std(l_coords, axis=0))
+        std = np.max(np.std(l_coords, axis=0))
         if std < 5:
             # not much movement, just average all
             coords[ld_idx, :] = np.mean(l_coords, axis=0)
         else:
             # rapid movement, average last couple
             rapid_movement = True
-            coords[ld_idx, :] = np.mean(l_coords[-3:-1, :], axis=0)
+            coords[ld_idx, :] = l_coords[-1, :]
 
     return LandmarksMap(coords), rapid_movement

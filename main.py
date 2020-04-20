@@ -8,6 +8,7 @@ from lenses import *
 def main_cam():
     # I have some webcam plugins, so it is 2, in most cases 0
     cam = cv2.VideoCapture(2)
+    cam.set(cv2.CAP_PROP_FPS, 24)  # fix fps to 24
     scene = Scene([LightningLens, GlassesLens])
 
     frames_t = []  # timestamp of last frames, for fps counter

@@ -7,7 +7,7 @@ from lenses import GlassesLens
 
 class Scene:
 
-    KEEP_LAST = 5
+    KEEP_LAST = 20  # the bigger the smoother and laggier
 
     def __init__(self, lense_classes):
         self._lenses = [kls() for kls in lense_classes]
