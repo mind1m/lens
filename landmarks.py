@@ -74,18 +74,20 @@ def smooth_landmarks(landmarks_maps):
     # initialize the list of (x, y)-coordinates
     coords = np.zeros((LANDMARKS_COUNT, 2), dtype='int')
 
-    # for now just average all last coords
+    # iterate all landmarks
     for ld_idx in range(LANDMARKS_COUNT):
+        # pre-fill zeros for all maps
         l_coords = np.zeros((len(landmarks_maps), 2), dtype='int')
         for map_idx, lm in enumerate(landmarks_maps):
             l_coords[map_idx, :] = lm.coords[ld_idx, :]
 
+        # calculate max std
         std = np.max(np.std(l_coords, axis=0))
         if std < 5:
             # not much movement, just average all
             coords[ld_idx, :] = np.mean(l_coords, axis=0)
         else:
-            # rapid movement, average last couple
+            # rapid movement, take last only
             rapid_movement = True
             coords[ld_idx, :] = l_coords[-1, :]
 

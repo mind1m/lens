@@ -9,15 +9,12 @@ class BaseLens:
     def __init__(self):
         self._img = cv2.imread(self.FILENAME, cv2.IMREAD_UNCHANGED)
 
-    def img_copy(self):
-        return self._img.copy()
-
     def overlay(self, face_img, landmarks_map):
-        # use softened landmarks when available
         if not landmarks_map:
+            # no landmarks?
             return face_img
 
-        lens_img = self.img_copy()
+        lens_img = self._img.copy()
 
         return self._overlay(lens_img, face_img, landmarks_map)
 
@@ -26,11 +23,12 @@ class BaseLens:
         raise NotImplementedError
 
     def _angle_between(self, p1, p2):
+        # angle between two points in degrees
         point = p2 - p1
         return -np.rad2deg(np.arctan2(point[1], point[0]))
 
     def _rotate(self, img, angle):
-        # before rotation, we need to pad image so it does not go out of border
+        # before rotation, we need to pad image so it does not go out of borders
         # we want it to become a square
         max_side = max(img.shape[0], img.shape[1])
         # how much we pad from each side (left/right)
@@ -54,6 +52,8 @@ class BaseLens:
         return result
 
     def _blend(self, orig_img, lens_img, center_x, center_y):
+        # blend lens_img into orig_img centring it at coordinates
+        # TODO this could break near borders
 
         x1 = int(center_x - lens_img.shape[1] / 2)
         y1 = int(center_y - lens_img.shape[0] / 2)
@@ -73,7 +73,7 @@ class BaseLens:
         return orig_img
 
     def _resize_to_width(self, img, to_width):
-        # make img be width wide, keeping aspect ratio
+        # make img be to_width wide, keeping aspect ratio
         scale = to_width / img.shape[1]
         width = int(img.shape[1] * scale)
         height = int(img.shape[0] * scale)
@@ -101,6 +101,7 @@ class BaseTwoPointsLens(BaseLens):
         # calculate how to resize
         img = self._resize_to_width(lens_img, between_points_dist * self.SCALE)
 
+        # calculate angle and turn image to match the baseline
         angle = self._angle_between(left_point, right_point)
         angle_rad = np.deg2rad(angle)
         img = self._rotate(img, angle)

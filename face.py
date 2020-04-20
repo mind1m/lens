@@ -24,10 +24,11 @@ class Face:
         face = cls(img)
 
         if prev_face:
+            # if we have previous face detection, lets reuse it and do faster method
             face._det = face._detect_face_fast(img, prev_face)
 
         if not face._det:
-            # if we did not detect a face fast
+            # if we did not detect a face fast (or at all before)
             face._det = face._detect_face(img)
 
         face._detect_landmarks()
@@ -59,7 +60,7 @@ class Face:
         y1 = max(prev_face.det.top() - pad_vert, 0)
         x2 = min(prev_face.det.right() + pad_horiz, img.shape[1])
         y2 = min(prev_face.det.bottom() + pad_vert, img.shape[0])
-        # crop the face out of image
+        # crop the face out of image using previous bounding box
         img = img[y1:y2, x1:x2]
 
         # resize to be smaller and faster to process
@@ -68,12 +69,12 @@ class Face:
         height = int(img.shape[0] * scale)
         img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
-        # now we can invoke regular face detection on a smaller image
+        # now we can invoke regular face detection on a smaller cropped image
         det = self._detect_face(img)
         if not det:
             return None
 
-        # need to map coordinates back to original frame
+        # need to map bounding box coordinates back to original frame
         orig_left = x1 + int(det.left() / scale)
         orig_top = y1 + int(det.top() / scale)
         orig_right = orig_left + int(det.width() / scale)
