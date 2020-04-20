@@ -62,17 +62,22 @@ class GlassesLens(BaseLens):
     def __init__(self):
         self._img = cv2.imread(self.FILENAME, cv2.IMREAD_UNCHANGED)
 
-    def overlay(self, face, face_img=None):
+    def overlay(self, face, face_img=None, smoothed_landmarks_map=None):
         if face_img is None:
             face_img = face._img.copy()
 
+        # use softened landmarks when available
+        landmarks_map = face.landmarks_map
+        if smoothed_landmarks_map:
+            landmarks_map = smoothed_landmarks_map
+
         img = self._img.copy()
 
-        if not face.mapper:
+        if not landmarks_map:
             return face_img
 
-        right_ear = face.mapper.get('right_ear')
-        left_ear = face.mapper.get('left_ear')
+        right_ear = landmarks_map.get('right_ear')
+        left_ear = landmarks_map.get('left_ear')
         ears_width = np.linalg.norm(left_ear - right_ear)
 
         # calculate how to resize glasses
