@@ -9,7 +9,7 @@ def open_cam():
         # I have some webcam plugins, so it is 2, in most cases 0
         cam = cv2.VideoCapture(2)
 
-    cam.set(cv2.CAP_PROP_FPS, 24)  # fix fps to 24
+    cam.set(cv2.CAP_PROP_FPS, 30)  # fix fps to 24
     return cam
 
 

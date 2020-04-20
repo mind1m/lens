@@ -83,7 +83,7 @@ def smooth_landmarks(landmarks_maps):
 
         # calculate max std
         std = np.max(np.std(l_coords, axis=0))
-        if std < 3:
+        if std < 7:
             # not much movement, just average all
             coords[ld_idx, :] = np.mean(l_coords, axis=0)
         else:

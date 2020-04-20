@@ -8,7 +8,7 @@ from cam_utils import open_cam, FPSTracker
 def main():
     cam = open_cam()
     # send a list of lenses to apply to the Scene
-    scene = Scene([LightningLens])
+    scene = Scene([LightningLens, GlassesLens])
     fps = FPSTracker()
 
     while True:
