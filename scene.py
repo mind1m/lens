@@ -2,7 +2,6 @@ import time
 
 from face import Face
 from landmarks import smooth_landmarks
-from lenses import GlassesLens
 
 
 class Scene:

@@ -1,17 +1,15 @@
 import cv2
-import time
 
 from scene import Scene
-from lenses import *
+from lenses import GlassesLens, LightningLens, ClownNoseLens
+from cam_utils import open_cam, FPSTracker
 
 
-def main_cam():
-    # I have some webcam plugins, so it is 2, in most cases 0
-    cam = cv2.VideoCapture(2)
-    cam.set(cv2.CAP_PROP_FPS, 24)  # fix fps to 24
-    scene = Scene([LightningLens, GlassesLens])
-
-    frames_t = []  # timestamp of last frames, for fps counter
+def main():
+    cam = open_cam()
+    # send a list of lenses to apply to the Scene
+    scene = Scene([LightningLens])
+    fps = FPSTracker()
 
     while True:
         # get frame
@@ -21,15 +19,7 @@ def main_cam():
         img = scene.process_frame(img, debug=False)
 
         # FPS
-        cur_t = time.time()
-        frames_t.append(cur_t)
-        # remove frames that are more then 1 sec old
-        frames_t = [t for t in frames_t if cur_t - t < 1]
-        cv2.putText(
-            img, f'FPS: {len(frames_t)}', (20, 20),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-            (255, 255, 0), 2
-        )
+        fps.count_and_draw(img)
 
         # display
         cv2.imshow('preview', img)
@@ -41,4 +31,4 @@ def main_cam():
 
 
 if __name__ == '__main__':
-    main_cam()
+    main()

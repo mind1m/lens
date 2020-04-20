@@ -81,7 +81,6 @@ class BaseLens:
         return cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
 
-
 class BaseTwoPointsLens(BaseLens):
     """
     Works for lenses when we want to align image by two landmarks.
@@ -112,8 +111,8 @@ class BaseTwoPointsLens(BaseLens):
         base_offset_x = self.OFFSET_X * between_points_dist
         base_offset_y = self.OFFSET_Y * between_points_dist
         # now need to turn offsets to match points alignment
-        offset_x = np.sin(angle_rad)*base_offset_x + np.sin(angle_rad)*base_offset_y
-        offset_y = np.cos(angle_rad)*base_offset_x + np.cos(angle_rad)*base_offset_y
+        offset_x = np.sin(angle_rad) * base_offset_x + np.sin(angle_rad) * base_offset_y
+        offset_y = np.cos(angle_rad) * base_offset_x + np.cos(angle_rad) * base_offset_y
 
         res = self._blend(face_img, img, center_x + offset_x, center_y + offset_y)
         return res
