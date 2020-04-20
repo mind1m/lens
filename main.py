@@ -5,6 +5,10 @@ from lenses import GlassesLens, LightningLens, ClownNoseLens
 from cam_utils import open_cam, FPSTracker
 from lenses_3d import Base3DLens
 
+import time
+
+
+FRAME_STEP = 1 / 25  # sec
 
 def main():
     cam = open_cam()
@@ -17,13 +21,15 @@ def main():
         _, img = cam.read()
 
         # process - main thing here
-        img = scene.process_frame(img, debug=True)
+        img = scene.process_frame(img, debug=False)
 
         # FPS
         fps.count_and_draw(img)
 
         # display
         cv2.imshow('preview', img)
+
+        # slow?
         if cv2.waitKey(1) == 27:
             break  # esc to quit
 

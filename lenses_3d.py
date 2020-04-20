@@ -1,13 +1,13 @@
 import cv2
 import time
 import numpy as np
-import tempfile
-
-from PIL import Image
 
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import loadPrcFileData, PNMImage
+from panda3d.core import loadPrcFileData
 from panda3d.core import *
+
+from estimator_3d import Estimator3D
+
 
 class MyApp(ShowBase):
 
@@ -24,10 +24,10 @@ class MyApp(ShowBase):
 
         directionalLight = DirectionalLight('directionalLight')
         directionalLight.setColor((1, 1, 1, 1))
-        directionalLightNP = render.attachNewNode(directionalLight)
+        directionalLightNP = self.render.attachNewNode(directionalLight)
         directionalLightNP.setPos(20,0,2)
         directionalLightNP.lookAt(0,0,0)
-        render.setLight(directionalLightNP)
+        self.render.setLight(directionalLightNP)
 
 
 class Base3DLens:
@@ -36,15 +36,19 @@ class Base3DLens:
 
         loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
         self.app = MyApp()
+        self._estimator_3d = None
 
     def overlay(self, face_img, landmarks_map):
-        position, rotation, scale = self._estimate_3d(landmarks_map)
-        rendered_img = self._render(position, rotation, scale)
-        return self._combine_3d_2d(face_img, rendered_img)
+        # if not self._estimator_3d:
+        self._estimator_3d = Estimator3D(
+            landmarks_map, face_img.shape[1], face_img.shape[0]
+        )
 
-    def _estimate_3d(self, landmarks_map):
-        # TODO
-        return None, None, None
+        # debug purposes
+        rendered_img = landmarks_map.debug_draw_3d(self._estimator_3d, face_img)
+
+        # rendered_img = self._render(position, rotation, scale)
+        return self._combine_3d_2d(face_img, face_img)
 
     def _render(self, position, rotation, scale):
         start_t = time.time()
