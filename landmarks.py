@@ -15,6 +15,7 @@ class LandmarksMap:
         'left_eye_right': 39,
         'right_eye_left': 42,
         'right_eye_right': 45,
+        'nose_top': 27,
         'nose_left': 31,
         'nose_right': 35,
         'mouth_left': 48,
@@ -41,6 +42,16 @@ class LandmarksMap:
         return self.coords[self.MAPPING[name]]
 
     def debug_draw(self, img):
+
+        for i in range(LANDMARKS_COUNT):
+            x, y = self.coords[i]
+            cv2.circle(img, (x, y), 1, (0, 0, 255), -1)
+            cv2.putText(
+                img, str(i), (x - 10, y + 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+                (0, 100, 0), 1
+            )
+
         for name in self.MAPPING.keys():
             x, y = self.get(name)
             cv2.circle(img, (x, y), 1, (0, 0, 255), -1)

@@ -14,7 +14,7 @@ class Scene:
         self._last_slow_face = None
         self._last_faces = []
 
-    def process_frame(self, img):
+    def process_frame(self, img, debug=False):
         start_t = time.time()
 
         # get prev face
@@ -27,7 +27,8 @@ class Scene:
                 self._last_faces = self._last_faces[-self.KEEP_LAST:]
             self._last_faces.append(face)
 
-        # img = face.debug_draw(img)
+        if debug:
+            img = face.debug_draw(img)
 
         # to avoid wiggle, smooth last faces' landmarks
         smoothed_landmarks_map, rapid_movement = smooth_landmarks(

@@ -2,12 +2,13 @@ import cv2
 import time
 
 from scene import Scene
+from lenses import *
 
 
 def main_cam():
     # I have some webcam plugins, so it is 2, in most cases 0
     cam = cv2.VideoCapture(2)
-    scene = Scene()
+    scene = Scene(ClownNoseLens)
 
     frames_t = []  # timestamp of last frames, for fps counter
 

@@ -4,7 +4,29 @@ import numpy as np
 
 class BaseLens:
 
-    def overlay(self, face):
+    FILENAME = None
+
+    def __init__(self):
+        self._img = cv2.imread(self.FILENAME, cv2.IMREAD_UNCHANGED)
+
+    def img_copy(self):
+        return self._img.copy()
+
+    def overlay(self, face, smoothed_landmarks_map=None):
+        # use softened landmarks when available
+        landmarks_map = face.landmarks_map
+        if smoothed_landmarks_map:
+            landmarks_map = smoothed_landmarks_map
+
+        face_img = face._img.copy()
+        if not landmarks_map:
+            return face_img
+
+        lens_img = self.img_copy()
+
+        return self._overlay(lens_img, face_img, landmarks_map)
+
+    def _overlay(self, lens_img, face, landmarks_map):
         # should return image
         raise NotImplementedError
 
@@ -55,37 +77,27 @@ class BaseLens:
 
         return orig_img
 
+    def _resize_to_width(self, img, to_width):
+        # make img be width wide, keeping aspect ratio
+        scale = to_width / img.shape[1]
+        width = int(img.shape[1] * scale)
+        height = int(img.shape[0] * scale)
+        # resize image
+        return cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+
 
 class GlassesLens(BaseLens):
+
     FILENAME = 'data/glasses.png'
 
-    def __init__(self):
-        self._img = cv2.imread(self.FILENAME, cv2.IMREAD_UNCHANGED)
-
-    def overlay(self, face, face_img=None, smoothed_landmarks_map=None):
-        if face_img is None:
-            face_img = face._img.copy()
-
-        # use softened landmarks when available
-        landmarks_map = face.landmarks_map
-        if smoothed_landmarks_map:
-            landmarks_map = smoothed_landmarks_map
-
-        img = self._img.copy()
-
-        if not landmarks_map:
-            return face_img
+    def _overlay(self, lens_img, face_img, landmarks_map):
 
         right_ear = landmarks_map.get('right_ear')
         left_ear = landmarks_map.get('left_ear')
         ears_width = np.linalg.norm(left_ear - right_ear)
 
         # calculate how to resize glasses
-        scale = ears_width / img.shape[1]
-        width = int(img.shape[1] * scale)
-        height = int(img.shape[0] * scale)
-        # resize image
-        img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+        img = self._resize_to_width(lens_img, ears_width)
 
         angle = self._angle_between(left_ear, right_ear)
         img = self._rotate(img, -angle)
@@ -96,6 +108,24 @@ class GlassesLens(BaseLens):
         res = self._blend(face_img, img, center_x, center_y)
         return res
 
-    def overlay_debug(self, face):
-        img = self.overlay(face)
-        return face.debug_draw(img=img)
+
+class ClownNoseLens(BaseLens):
+
+    FILENAME = 'data/clown_nose.png'
+
+    def _overlay(self, lens_img, face_img, landmarks_map):
+
+        nose_left = landmarks_map.get('nose_left')
+        nose_right = landmarks_map.get('nose_right')
+        nose_width = np.linalg.norm(nose_left - nose_right)
+
+        img = self._resize_to_width(lens_img, nose_width * 2)
+
+        angle = self._angle_between(nose_left, nose_right)
+        img = self._rotate(img, -angle)
+
+        center_x = int(nose_left[0] + (nose_right[0] - nose_left[0]) / 2)
+        center_y = int(nose_left[1] + (nose_right[1] - nose_left[1]) / 2)
+
+        res = self._blend(face_img, img, center_x, center_y)
+        return res

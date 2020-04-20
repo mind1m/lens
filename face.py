@@ -102,7 +102,7 @@ class Face:
             y2 = self._det.bottom()
             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
-            self.mapper.debug_draw(img)
+            self.landmarks_map.debug_draw(img)
 
         return img
 
