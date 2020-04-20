@@ -7,10 +7,10 @@ from lenses import GlassesLens
 
 class Scene:
 
-    KEEP_LAST = 20
+    KEEP_LAST = 5
 
-    def __init__(self, lense_cls=GlassesLens):
-        self._lense = lense_cls()
+    def __init__(self, lense_classes):
+        self._lenses = [kls() for kls in lense_classes]
         self._last_slow_face = None
         self._last_faces = []
 
@@ -38,7 +38,9 @@ class Scene:
             # need to clean the landmarks queue as they are obsolete now
             self._last_faces = [face]
 
-        complete_img = self._lense.overlay(face, smoothed_landmarks_map=smoothed_landmarks_map)
+        face_img = face._img.copy()
+        for lens in self._lenses:
+            face_img = lens.overlay(face_img, smoothed_landmarks_map)
 
         print('Processed frame in {} sec'.format(time.time() - start_t))
-        return complete_img
+        return face_img

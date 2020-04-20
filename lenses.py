@@ -12,13 +12,8 @@ class BaseLens:
     def img_copy(self):
         return self._img.copy()
 
-    def overlay(self, face, smoothed_landmarks_map=None):
+    def overlay(self, face_img, landmarks_map):
         # use softened landmarks when available
-        landmarks_map = face.landmarks_map
-        if smoothed_landmarks_map:
-            landmarks_map = smoothed_landmarks_map
-
-        face_img = face._img.copy()
         if not landmarks_map:
             return face_img
 
@@ -32,7 +27,7 @@ class BaseLens:
 
     def _angle_between(self, p1, p2):
         point = p2 - p1
-        return np.rad2deg(np.arctan2(point[1], point[0]))
+        return -np.rad2deg(np.arctan2(point[1], point[0]))
 
     def _rotate(self, img, angle):
         # before rotation, we need to pad image so it does not go out of border
@@ -86,46 +81,63 @@ class BaseLens:
         return cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
 
-class GlassesLens(BaseLens):
+
+class BaseTwoPointsLens(BaseLens):
+    """
+    Works for lenses when we want to align image by two landmarks.
+    E.g. glasses can use ears.
+    """
+    LEFT_LANDMARK_KEY = None
+    RIGHT_LANDMARK_KEY = None
+    SCALE = 1
+    OFFSET_X = 0  # from center between points, fraction of distances between points
+    OFFSET_Y = 0  # from center between points, fraction of distances between points
+
+    def _overlay(self, lens_img, face_img, landmarks_map):
+
+        right_point = landmarks_map.get(self.RIGHT_LANDMARK_KEY)
+        left_point = landmarks_map.get(self.LEFT_LANDMARK_KEY)
+        between_points_dist = np.linalg.norm(left_point - right_point)
+
+        # calculate how to resize
+        img = self._resize_to_width(lens_img, between_points_dist * self.SCALE)
+
+        angle = self._angle_between(left_point, right_point)
+        angle_rad = np.deg2rad(angle)
+        img = self._rotate(img, angle)
+
+        center_x = int(left_point[0] + (right_point[0] - left_point[0]) / 2)
+        center_y = int(left_point[1] + (right_point[1] - left_point[1]) / 2)
+
+        base_offset_x = self.OFFSET_X * between_points_dist
+        base_offset_y = self.OFFSET_Y * between_points_dist
+        # now need to turn offsets to match points alignment
+        offset_x = np.sin(angle_rad)*base_offset_x + np.sin(angle_rad)*base_offset_y
+        offset_y = np.cos(angle_rad)*base_offset_x + np.cos(angle_rad)*base_offset_y
+
+        res = self._blend(face_img, img, center_x + offset_x, center_y + offset_y)
+        return res
+
+
+class GlassesLens(BaseTwoPointsLens):
 
     FILENAME = 'data/glasses.png'
-
-    def _overlay(self, lens_img, face_img, landmarks_map):
-
-        right_ear = landmarks_map.get('right_ear')
-        left_ear = landmarks_map.get('left_ear')
-        ears_width = np.linalg.norm(left_ear - right_ear)
-
-        # calculate how to resize glasses
-        img = self._resize_to_width(lens_img, ears_width)
-
-        angle = self._angle_between(left_ear, right_ear)
-        img = self._rotate(img, -angle)
-
-        center_x = int(left_ear[0] + (right_ear[0] - left_ear[0]) / 2)
-        center_y = int(left_ear[1] + (right_ear[1] - left_ear[1]) / 2)
-
-        res = self._blend(face_img, img, center_x, center_y)
-        return res
+    LEFT_LANDMARK_KEY = 'left_ear'
+    RIGHT_LANDMARK_KEY = 'right_ear'
 
 
-class ClownNoseLens(BaseLens):
+class ClownNoseLens(BaseTwoPointsLens):
 
     FILENAME = 'data/clown_nose.png'
+    LEFT_LANDMARK_KEY = 'nose_left'
+    RIGHT_LANDMARK_KEY = 'nose_right'
+    SCALE = 2
 
-    def _overlay(self, lens_img, face_img, landmarks_map):
 
-        nose_left = landmarks_map.get('nose_left')
-        nose_right = landmarks_map.get('nose_right')
-        nose_width = np.linalg.norm(nose_left - nose_right)
+class LightningLens(BaseTwoPointsLens):
 
-        img = self._resize_to_width(lens_img, nose_width * 2)
-
-        angle = self._angle_between(nose_left, nose_right)
-        img = self._rotate(img, -angle)
-
-        center_x = int(nose_left[0] + (nose_right[0] - nose_left[0]) / 2)
-        center_y = int(nose_left[1] + (nose_right[1] - nose_left[1]) / 2)
-
-        res = self._blend(face_img, img, center_x, center_y)
-        return res
+    FILENAME = 'data/lightning.png'
+    LEFT_LANDMARK_KEY = 'left_eye_right'
+    RIGHT_LANDMARK_KEY = 'right_eye_left'
+    SCALE = 0.8
+    OFFSET_Y = -1.3

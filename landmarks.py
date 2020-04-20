@@ -15,6 +15,8 @@ class LandmarksMap:
         'left_eye_right': 39,
         'right_eye_left': 42,
         'right_eye_right': 45,
+        'left_brow_center': 19,
+        'right_brow_center': 24,
         'nose_top': 27,
         'nose_left': 31,
         'nose_right': 35,

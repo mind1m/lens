@@ -8,7 +8,7 @@ from lenses import *
 def main_cam():
     # I have some webcam plugins, so it is 2, in most cases 0
     cam = cv2.VideoCapture(2)
-    scene = Scene(ClownNoseLens)
+    scene = Scene([LightningLens, GlassesLens])
 
     frames_t = []  # timestamp of last frames, for fps counter
 
@@ -17,7 +17,7 @@ def main_cam():
         _, img = cam.read()
 
         # process - main thing here
-        img = scene.process_frame(img)
+        img = scene.process_frame(img, debug=False)
 
         # FPS
         cur_t = time.time()
