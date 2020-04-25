@@ -29,11 +29,12 @@ class Panda3dApp(ShowBase):
         self._line(0, 5, 0, (0, 1, 0, 1))
         self._line(0, 0, 5, (1, 0, 0, 1))
 
-    def __init__(self):
+    def __init__(self, debug=False):
         ShowBase.__init__(self)
 
         self.obj = self.loader.loadModel('data/cap.3ds')
         self.obj.reparentTo(self.render)
+        self.obj.setColorScale((0.1, 0.1, 1, 1))
         self.obj.setPos(-1, 0, 1)
         self.obj.setScale(0.01)
         self.obj.setP(90)
@@ -46,10 +47,6 @@ class Panda3dApp(ShowBase):
         self.head.setScale(0.2)
         self.head.setH(90)
 
-        # self.teapot = self.loader.loadModel('teapot')
-        # self.teapot.reparentTo(self.render)
-        # self.teapot.setPos(-1, 0, 1)
-
         self.cam.reparentTo(self.render)
         self.cam.setPos(10, 0, 0)
         self.cam.lookAt(0, 0, 0)
@@ -57,13 +54,16 @@ class Panda3dApp(ShowBase):
 
         self.setBackgroundColor(*CHROMAKEY)
 
-        # self._coords()
+        if debug:
+            self._coords()
 
         light = PointLight('plight')
         light.setColor((0.8, 0.8, 0.8, 1))
         light_np = self.render.attachNewNode(light)
         light_np.setPos(5, 0, 2)
         self.obj.setLight(light_np)
+        if debug:
+            self.head.setLight(light_np)
 
         alight = AmbientLight('alight')
         alight.setColor((0.2, 0.2, 0.2, 1))
