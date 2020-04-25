@@ -33,14 +33,6 @@ class Panda3dApp(ShowBase):
     def __init__(self, debug=False):
         ShowBase.__init__(self)
 
-        self.obj = self.loader.loadModel('data/cap.3ds')
-        self.obj.reparentTo(self.render)
-        self.obj.setColorScale((0.1, 0.1, 1, 1))
-        self.obj.setPos(-1, 0, 1)
-        self.obj.setScale(0.01)
-        self.obj.setP(90)
-        self.obj.setH(90)
-
         self.head = self.loader.loadModel('data/head.obj')
         self.head.setColor(*CHROMAKEY)
         self.head.reparentTo(self.render)
@@ -60,25 +52,33 @@ class Panda3dApp(ShowBase):
 
         light = PointLight('plight')
         light.setColor((0.8, 0.8, 0.8, 1))
-        light_np = self.render.attachNewNode(light)
-        light_np.setPos(5, 0, 2)
-        self.obj.setLight(light_np)
+        self.light_np = self.render.attachNewNode(light)
+        self.light_np.setPos(5, 0, 2)
         if debug:
             self.head.setLight(light_np)
 
         alight = AmbientLight('alight')
         alight.setColor((0.2, 0.2, 0.2, 1))
-        alnp = self.render.attachNewNode(alight.upcastToPandaNode())
-        self.obj.setLight(alnp)
+        self.alnp = self.render.attachNewNode(alight.upcastToPandaNode())
 
 
 class Base3DLens:
+
+    RENDER_POSITION = (-1, 0, 1.5)  # 3d point that is used to blend to original image
 
     def __init__(self, debug=False):
         # if not debug:
         #     loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
         self.debug = debug
         self.panda3d_app = Panda3dApp(debug)
+
+        # get lens object
+        obj = self.get_lens_object()
+        # attach it to scene and lights
+        obj.reparentTo(self.panda3d_app.render)
+        obj.setLight(self.panda3d_app.light_np)
+        obj.setLight(self.panda3d_app.alnp)
+
         self._estimator_3d = None
 
     def overlay(self, face_img, landmarks_map):
@@ -163,7 +163,22 @@ class Base3DLens:
         # crop rendered_img to item only
         rendered_img = self._crop_chroma(rendered_img)
 
-        x, y = self._estimator_3d.project_to_2d(-1, 0, 1.5)
-        rendered_img = self._blend(face_img, rendered_img, x, y)
+        # find where our lens should be in 3d image
+        center_x, center_y = self._estimator_3d.project_to_2d(*self.RENDER_POSITION)
+        res = self._blend(face_img, rendered_img, center_x, center_y)
 
-        return rendered_img
+        return res
+
+
+class Cap3DLens(Base3DLens):
+
+    RENDER_POSITION = (-1, 0, 1.5)  # 3d point that is used to blend to original image
+
+    def get_lens_object(self):
+        obj = self.panda3d_app.loader.loadModel('data/cap.3ds')
+        obj.setColorScale((0.1, 0.1, 1, 1))
+        obj.setPos(-1, 0, 1)
+        obj.setScale(0.01)
+        obj.setP(90)
+        obj.setH(90)
+        return obj
