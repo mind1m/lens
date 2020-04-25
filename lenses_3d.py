@@ -10,6 +10,7 @@ from estimator_3d import Estimator3D
 
 
 CHROMAKEY = (0, 0.69, 0.25)
+CHROMAKEY_INT_BGR = (64, 176, 0)
 
 
 class Panda3dApp(ShowBase):
@@ -73,9 +74,11 @@ class Panda3dApp(ShowBase):
 
 class Base3DLens:
 
-    def __init__(self):
-        # loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
-        self.panda3d_app = Panda3dApp()
+    def __init__(self, debug=False):
+        # if not debug:
+        #     loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
+        self.debug = debug
+        self.panda3d_app = Panda3dApp(debug)
         self._estimator_3d = None
 
     def overlay(self, face_img, landmarks_map):
@@ -84,10 +87,13 @@ class Base3DLens:
         )
 
         # debug purposes
-        rendered_img = landmarks_map.debug_draw_3d(self._estimator_3d, face_img)
+        if self.debug:
+            face_img = landmarks_map.debug_draw_3d(self._estimator_3d, face_img)
 
         self._render()
-        return rendered_img
+        rendered_img = self._screenshot()
+
+        return self._combine_3d_2d(face_img, rendered_img)
 
     def _screenshot(self):
         # get getScreenshot as Texture, could be sped up using texture buffer?
@@ -95,13 +101,11 @@ class Base3DLens:
         tex = dr.getScreenshot()
 
         # Texture to opencv
-        bytes_str = tex.getRamImageAs("RGB").getData()
+        bytes_str = tex.getRamImageAs("BGR").getData()
         img = np.fromstring(bytes_str, np.uint8).reshape(tex.getYSize(), tex.getXSize(), 3)
         img = cv2.flip(img, 0)  # dunno why but it is inverted in texture
 
-        cv2.imshow('3d', img)
-        if cv2.waitKey(1):
-            pass
+        return img
 
     def _render(self):
         start_t = time.time()
@@ -114,7 +118,52 @@ class Base3DLens:
 
         print('Rendered frame in {} sec'.format(time.time() - start_t))
 
+    def _crop_chroma(self, img):
+        start_t = time.time()
+
+        chroma_pixel = np.array(CHROMAKEY_INT_BGR)
+        # same size as img, bool
+        # True when non-chromakey pixel
+        mask = (img != chroma_pixel).all(axis=2).astype(np.uint8)
+        x, y, w, h = cv2.boundingRect(cv2.findNonZero(mask))
+
+        # add alpha channel
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
+        # Then assign the mask to the last channel of the image
+        img[:, :, 3] = mask * 255
+
+        res = img[y:y + h, x:x + w, :]
+        print('Crop took {}'.format(time.time()-start_t))
+
+        return res
+
+    def _blend(self, orig_img, lens_img, center_x, center_y):
+        # blend lens_img into orig_img centring it at coordinates
+        # TODO this could break near borders
+
+        x1 = int(center_x - lens_img.shape[1] / 2)
+        y1 = int(center_y - lens_img.shape[0] / 2)
+
+        alpha_lens = lens_img[:, :, 3] / 255.0
+        alpha_orig = 1.0 - alpha_lens
+
+        x2 = x1 + lens_img.shape[1]
+        y2 = y1 + lens_img.shape[0]
+
+        for c in range(0, 3):
+            orig_img[y1:y2, x1:x2, c] = (
+                alpha_lens * lens_img[:, :, c] +
+                alpha_orig * orig_img[y1:y2, x1:x2, c]
+            )
+
+        return orig_img
+
 
     def _combine_3d_2d(self, face_img, rendered_img):
-        # TODO
-        return face_img
+        # crop rendered_img to item only
+        rendered_img = self._crop_chroma(rendered_img)
+
+        x, y = self._estimator_3d.project_to_2d(-1, 0, 1.5)
+        rendered_img = self._blend(face_img, rendered_img, x, y)
+
+        return rendered_img
