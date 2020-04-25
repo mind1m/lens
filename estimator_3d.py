@@ -54,9 +54,19 @@ class Estimator3D:
         pos = (-R).T.dot(self.trans)
         return pos
 
-    def get_cam_rot(self):
+    def get_cam_target_pos(self):
+        # convert from opencv type to rotation 3x3 matrix, transpose it
+        R = cv2.Rodrigues(self.rot)[0].T
+        point_at = R.dot([0, 0, 1])
+        return point_at
+        scipy_rot = Rotation.from_matrix(R)
+        # panda3d requires euler angles for rotation
+        return scipy_rot.as_euler('zxy', degrees=True)
+
+    def get_cam_roll(self):
         # convert from opencv type to rotation 3x3 matrix, transpose it
         R = cv2.Rodrigues(self.rot)[0].T
         scipy_rot = Rotation.from_matrix(R)
         # panda3d requires euler angles for rotation
-        return scipy_rot.as_euler('zxy', degrees=True)
+        roll = scipy_rot.as_euler('zxy', degrees=True)[0]
+        return roll

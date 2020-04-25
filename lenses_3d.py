@@ -9,6 +9,9 @@ from panda3d.core import *
 from estimator_3d import Estimator3D
 
 
+CHROMAKEY = (0, 0.69, 0.25)
+
+
 class Panda3dApp(ShowBase):
 
     def _line(self, x, y, z, color):
@@ -29,23 +32,43 @@ class Panda3dApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
 
+        self.obj = self.loader.loadModel('data/cap.3ds')
+        self.obj.reparentTo(self.render)
+        self.obj.setPos(-1, 0, 1)
+        self.obj.setScale(0.01)
+        self.obj.setP(90)
+        self.obj.setH(90)
+
+        self.head = self.loader.loadModel('data/head.obj')
+        self.head.setColor(*CHROMAKEY)
+        self.head.reparentTo(self.render)
+        self.head.setPos(-4.1, 0, -7.5)
+        self.head.setScale(0.2)
+        self.head.setH(90)
+
         # self.teapot = self.loader.loadModel('teapot')
         # self.teapot.reparentTo(self.render)
-        # self.teapot.setPos(0, 0, 0)
-        # self.teapot.scaleTo(2, 2, 2)
+        # self.teapot.setPos(-1, 0, 1)
 
         self.cam.reparentTo(self.render)
         self.cam.setPos(10, 0, 0)
         self.cam.lookAt(0, 0, 0)
+        self.camLens.setFov(50)
 
-        self._coords()
+        self.setBackgroundColor(*CHROMAKEY)
 
-        directionalLight = DirectionalLight('directionalLight')
-        directionalLight.setColor((1, 1, 1, 1))
-        directionalLightNP = self.render.attachNewNode(directionalLight)
-        directionalLightNP.setPos(10, 10, 10)
-        directionalLightNP.lookAt(0, 0, 0)
-        self.render.setLight(directionalLightNP)
+        # self._coords()
+
+        light = PointLight('plight')
+        light.setColor((0.8, 0.8, 0.8, 1))
+        light_np = self.render.attachNewNode(light)
+        light_np.setPos(5, 0, 2)
+        self.obj.setLight(light_np)
+
+        alight = AmbientLight('alight')
+        alight.setColor((0.2, 0.2, 0.2, 1))
+        alnp = self.render.attachNewNode(alight.upcastToPandaNode())
+        self.obj.setLight(alnp)
 
 
 class Base3DLens:
@@ -84,13 +107,9 @@ class Base3DLens:
         start_t = time.time()
 
         self.panda3d_app.cam.setPos(*self._estimator_3d.get_cam_pos())
-        h, p, r = self._estimator_3d.get_cam_rot()
+        self.panda3d_app.cam.lookAt(*self._estimator_3d.get_cam_target_pos())
+        self.panda3d_app.cam.setR(self._estimator_3d.get_cam_roll() - 90)
 
-        # looking from (10, 0, 0) to (0, 0, 0) is hpr (90, 0, 0)
-        # h += 180
-        # p -= 90
-        r += 90
-        self.panda3d_app.cam.setHpr(h, p, r)
         self.panda3d_app.graphicsEngine.renderFrame()
 
         print('Rendered frame in {} sec'.format(time.time() - start_t))

@@ -32,23 +32,6 @@ class LandmarksMap:
         'chin_right': 9,
     }
 
-
-    # # y is up, z to me, x to the right
-    # COORDS_3D = {
-    #     'nose_bottom': (0, 0, 0),  # origin
-    #     'left_ear': (-1, 0.6, -1),
-    #     'right_ear': (1, 0.6, -1),
-    #     'left_ear_bottom': (-1, 0, -1),
-    #     'right_ear_bottom': (1, 0, -1),
-    #     'jaw_left': (-0.6, -0.45, -0.5),
-    #     'jaw_right': (0.6, -0.45, -0.5),
-    #     'chin_left': (-0.2, -0.9, 0),
-    #     'chin_right': (0.2, -0.9, 0),
-    #     'left_eye_left': (-0.6, 0.6, 0),
-    #     'right_eye_right': (0.6, 0.6, 0),
-    # }
-
-
     # 1 is face half-width
     # Z up, x to me, y to the right
     COORDS_3D = {
