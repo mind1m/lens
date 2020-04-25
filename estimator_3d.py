@@ -2,6 +2,8 @@ import cv2
 import time
 import numpy as np
 
+from scipy.spatial.transform import Rotation
+
 
 class Estimator3D:
 
@@ -44,3 +46,17 @@ class Estimator3D:
         )
 
         return point_2d[0][0].astype(int)
+
+    def get_cam_pos(self):
+        # convert from opencv type to rotation 3x3 matrix
+        R = cv2.Rodrigues(self.rot)[0]
+        # apply -R^t * T to get 3x1 camera position vector
+        pos = (-R).T.dot(self.trans)
+        return pos
+
+    def get_cam_rot(self):
+        # convert from opencv type to rotation 3x3 matrix, transpose it
+        R = cv2.Rodrigues(self.rot)[0].T
+        scipy_rot = Rotation.from_matrix(R)
+        # panda3d requires euler angles for rotation
+        return scipy_rot.as_euler('zxy', degrees=True)

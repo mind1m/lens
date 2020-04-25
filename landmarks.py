@@ -33,19 +33,36 @@ class LandmarksMap:
     }
 
 
+    # # y is up, z to me, x to the right
+    # COORDS_3D = {
+    #     'nose_bottom': (0, 0, 0),  # origin
+    #     'left_ear': (-1, 0.6, -1),
+    #     'right_ear': (1, 0.6, -1),
+    #     'left_ear_bottom': (-1, 0, -1),
+    #     'right_ear_bottom': (1, 0, -1),
+    #     'jaw_left': (-0.6, -0.45, -0.5),
+    #     'jaw_right': (0.6, -0.45, -0.5),
+    #     'chin_left': (-0.2, -0.9, 0),
+    #     'chin_right': (0.2, -0.9, 0),
+    #     'left_eye_left': (-0.6, 0.6, 0),
+    #     'right_eye_right': (0.6, 0.6, 0),
+    # }
+
+
     # 1 is face half-width
+    # Z up, x to me, y to the right
     COORDS_3D = {
         'nose_bottom': (0, 0, 0),  # origin
-        'left_ear': (-1, 0.6, -1),
-        'right_ear': (1, 0.6, -1),
-        'left_ear_bottom': (-1, 0, -1),
-        'right_ear_bottom': (1, 0, -1),
-        'jaw_left': (-0.6, -0.45, -0.5),
-        'jaw_right': (0.6, -0.45, -0.5),
-        'chin_left': (-0.2, -0.9, 0),
-        'chin_right': (0.2, -0.9, 0),
-        'left_eye_left': (-0.6, 0.6, 0),
-        'right_eye_right': (0.6, 0.6, 0),
+        'left_ear': (-1, -1, 0.6),
+        'right_ear': (-1, 1, 0.6),
+        'left_ear_bottom': (-1, -1, 0),
+        'right_ear_bottom': (-1, 1, 0),
+        'jaw_left': (-0.5, -0.6, -0.45),
+        'jaw_right': (-0.5, 0.6, -0.45),
+        'chin_left': (0, -0.2, -0.9),
+        'chin_right': (0, 0.2, -0.9),
+        'left_eye_left': (0, -0.6, 0.6),
+        'right_eye_right': (0, 0.6, 0.6),
     }
 
     @classmethod
@@ -123,6 +140,7 @@ class LandmarksMap:
             cv2.FONT_HERSHEY_SIMPLEX, 0.4,
             (0, 0, 0), 1
         )
+        return img
 
 
 def smooth_landmarks(landmarks_maps):

@@ -9,37 +9,53 @@ from panda3d.core import *
 from estimator_3d import Estimator3D
 
 
-class MyApp(ShowBase):
+class Panda3dApp(ShowBase):
+
+    def _line(self, x, y, z, color):
+        lines = LineSegs()
+        lines.setColor(color)
+        lines.moveTo(0, 0, 0)
+        lines.drawTo(x, y, z)
+        lines.setThickness(5)
+        node = lines.create()
+        np = NodePath(node)
+        np.reparentTo(self.render)
+
+    def _coords(self):
+        self._line(5, 0, 0, (0, 0, 1, 1))
+        self._line(0, 5, 0, (0, 1, 0, 1))
+        self._line(0, 0, 5, (1, 0, 0, 1))
 
     def __init__(self):
         ShowBase.__init__(self)
 
-        self.teapot = self.loader.loadModel('teapot')
-        self.teapot.reparentTo(self.render)
-        self.teapot.setPos(0, 0, 0)
+        # self.teapot = self.loader.loadModel('teapot')
+        # self.teapot.reparentTo(self.render)
+        # self.teapot.setPos(0, 0, 0)
+        # self.teapot.scaleTo(2, 2, 2)
 
         self.cam.reparentTo(self.render)
-        self.cam.setPos(10, 0, 2)
-        self.cam.lookAt(0, 0, 2)
+        self.cam.setPos(10, 0, 0)
+        self.cam.lookAt(0, 0, 0)
+
+        self._coords()
 
         directionalLight = DirectionalLight('directionalLight')
         directionalLight.setColor((1, 1, 1, 1))
         directionalLightNP = self.render.attachNewNode(directionalLight)
-        directionalLightNP.setPos(20,0,2)
-        directionalLightNP.lookAt(0,0,0)
+        directionalLightNP.setPos(10, 10, 10)
+        directionalLightNP.lookAt(0, 0, 0)
         self.render.setLight(directionalLightNP)
 
 
 class Base3DLens:
 
     def __init__(self):
-
-        loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
-        self.app = MyApp()
+        # loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
+        self.panda3d_app = Panda3dApp()
         self._estimator_3d = None
 
     def overlay(self, face_img, landmarks_map):
-        # if not self._estimator_3d:
         self._estimator_3d = Estimator3D(
             landmarks_map, face_img.shape[1], face_img.shape[0]
         )
@@ -47,16 +63,12 @@ class Base3DLens:
         # debug purposes
         rendered_img = landmarks_map.debug_draw_3d(self._estimator_3d, face_img)
 
-        # rendered_img = self._render(position, rotation, scale)
-        return self._combine_3d_2d(face_img, face_img)
+        self._render()
+        return rendered_img
 
-    def _render(self, position, rotation, scale):
-        start_t = time.time()
-
-        self.app.graphicsEngine.renderFrame()
-
+    def _screenshot(self):
         # get getScreenshot as Texture, could be sped up using texture buffer?
-        dr = self.app.camNode.getDisplayRegion(0)
+        dr = self.panda3d_app.camNode.getDisplayRegion(0)
         tex = dr.getScreenshot()
 
         # Texture to opencv
@@ -64,14 +76,26 @@ class Base3DLens:
         img = np.fromstring(bytes_str, np.uint8).reshape(tex.getYSize(), tex.getXSize(), 3)
         img = cv2.flip(img, 0)  # dunno why but it is inverted in texture
 
-        print('Rendered frame in {} sec'.format(time.time() - start_t))
-
         cv2.imshow('3d', img)
         if cv2.waitKey(1):
             pass
 
+    def _render(self):
+        start_t = time.time()
+
+        self.panda3d_app.cam.setPos(*self._estimator_3d.get_cam_pos())
+        h, p, r = self._estimator_3d.get_cam_rot()
+
+        # looking from (10, 0, 0) to (0, 0, 0) is hpr (90, 0, 0)
+        # h += 180
+        # p -= 90
+        r += 90
+        self.panda3d_app.cam.setHpr(h, p, r)
+        self.panda3d_app.graphicsEngine.renderFrame()
+
+        print('Rendered frame in {} sec'.format(time.time() - start_t))
+
+
     def _combine_3d_2d(self, face_img, rendered_img):
         # TODO
         return face_img
-
-
