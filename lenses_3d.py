@@ -55,7 +55,7 @@ class Panda3dApp(ShowBase):
         self.light_np = self.render.attachNewNode(light)
         self.light_np.setPos(5, 0, 2)
         if debug:
-            self.head.setLight(light_np)
+            self.head.setLight(self.light_np)
 
         alight = AmbientLight('alight')
         alight.setColor((0.2, 0.2, 0.2, 1))
@@ -93,7 +93,11 @@ class Base3DLens:
         self._render()
         rendered_img = self._screenshot()
 
-        return self._combine_3d_2d(face_img, rendered_img)
+        if self.debug:
+            return face_img
+
+        res = self._combine_3d_2d(face_img, rendered_img)
+        return res
 
     def _screenshot(self):
         # get getScreenshot as Texture, could be sped up using texture buffer?
@@ -181,4 +185,16 @@ class Cap3DLens(Base3DLens):
         obj.setScale(0.01)
         obj.setP(90)
         obj.setH(90)
+        return obj
+
+
+class Ring3DLens(Base3DLens):
+
+    RENDER_POSITION = (-1, 0, 1.5)  # 3d point that is used to blend to original image
+
+    def get_lens_object(self):
+        obj = self.panda3d_app.loader.loadModel('data/ring.obj')
+        obj.setColorScale((212/256, 175/256, 55/256, 1))  # gold babe
+        obj.setPos(6, 7.7, 2)  # it is not centered by default
+        obj.setScale(2)
         return obj

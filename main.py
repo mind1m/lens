@@ -3,7 +3,7 @@ import cv2
 from scene import Scene
 from lenses import GlassesLens, LightningLens, ClownNoseLens
 from cam_utils import open_cam, FPSTracker
-from lenses_3d import Cap3DLens
+from lenses_3d import Cap3DLens, Ring3DLens
 
 import time
 
@@ -13,7 +13,7 @@ FRAME_STEP = 1 / 25  # sec
 def main():
     cam = open_cam()
     # send a list of lenses to apply to the Scene
-    scene = Scene([Cap3DLens])
+    scene = Scene([Ring3DLens])
     fps = FPSTracker()
 
     while True:
