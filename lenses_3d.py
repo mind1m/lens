@@ -65,12 +65,13 @@ class Panda3dApp(ShowBase):
 class Base3DLens:
 
     RENDER_POSITION = (-1, 0, 1.5)  # 3d point that is used to blend to original image
+    DEBUG = False
 
-    def __init__(self, debug=False):
+    def __init__(self):
         # if not debug:
         #     loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
-        self.debug = debug
-        self.panda3d_app = Panda3dApp(debug)
+        self.debug = self.DEBUG
+        self.panda3d_app = Panda3dApp(self.debug)
 
         # get lens object
         obj = self.get_lens_object()
@@ -197,4 +198,19 @@ class Ring3DLens(Base3DLens):
         obj.setColorScale((212/256, 175/256, 55/256, 1))  # gold babe
         obj.setPos(6, 7.7, 2)  # it is not centered by default
         obj.setScale(2)
+        return obj
+
+
+class Dog3DLens(Base3DLens):
+
+    DEBUG = False
+
+    RENDER_POSITION = (-1, 0, 0.5)  # 3d point that is used to blend to original image
+
+    def get_lens_object(self):
+        obj = self.panda3d_app.loader.loadModel('data/dog.obj')
+        obj.setColorScale((212/256, 175/256, 55/256, 1))  # gold babe
+        obj.setPos(-5, -1, -3)  # it is not centered by default
+        obj.setScale(1.5)
+        obj.setH(90)
         return obj
