@@ -68,10 +68,12 @@ class Base3DLens:
     DEBUG = False
 
     def __init__(self):
-        # if not debug:
-        #     loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
+        # loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
         self.debug = self.DEBUG
         self.panda3d_app = Panda3dApp(self.debug)
+
+        self._prev_cam_pos = None
+        self._prev_cam_target_pos = None
 
         # get lens object
         obj = self.get_lens_object()
@@ -115,13 +117,29 @@ class Base3DLens:
     def _render(self):
         start_t = time.time()
 
-        self.panda3d_app.cam.setPos(*self._estimator_3d.get_cam_pos())
-        self.panda3d_app.cam.lookAt(*self._estimator_3d.get_cam_target_pos())
-        self.panda3d_app.cam.setR(self._estimator_3d.get_cam_roll() - 90)
+        # try to ignore shocks and sudden jumps
+        move_camera = True
+        new_cam_pos = self._estimator_3d.get_cam_pos()
+        new_cam_target_pos = self._estimator_3d.get_cam_target_pos()
+        if self._prev_cam_pos is not None:
+            dist_cam = np.linalg.norm(new_cam_pos - self._prev_cam_pos)
+            dist_cam_target = np.linalg.norm(new_cam_target_pos - self._prev_cam_target_pos)
+            dist = dist_cam + dist_cam_target
+
+            if dist > 1:
+                move_camera = False
+
+        self._prev_cam_pos = new_cam_pos
+        self._prev_cam_target_pos = new_cam_target_pos
+
+        if move_camera:
+            self.panda3d_app.cam.setPos(*new_cam_pos)
+            self.panda3d_app.cam.lookAt(*new_cam_target_pos)
+            self.panda3d_app.cam.setR(self._estimator_3d.get_cam_roll() - 90)
 
         self.panda3d_app.graphicsEngine.renderFrame()
 
-        print('Rendered frame in {} sec'.format(time.time() - start_t))
+        print('..Rendered frame in {} sec'.format(time.time() - start_t))
 
     def _crop_chroma(self, img):
         start_t = time.time()
@@ -138,7 +156,7 @@ class Base3DLens:
         img[:, :, 3] = mask * 255
 
         res = img[y:y + h, x:x + w, :]
-        print('Crop took {}'.format(time.time()-start_t))
+        print('..Crop took {}'.format(time.time()-start_t))
 
         return res
 
@@ -170,7 +188,11 @@ class Base3DLens:
 
         # find where our lens should be in 3d image
         center_x, center_y = self._estimator_3d.project_to_2d(*self.RENDER_POSITION)
-        res = self._blend(face_img, rendered_img, center_x, center_y)
+        try:
+            res = self._blend(face_img, rendered_img, center_x, center_y)
+        except ValueError:
+            print('Error while blending, skiping frame')
+            return face_img
 
         return res
 

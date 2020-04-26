@@ -43,5 +43,5 @@ class Scene:
         for lens in self._lenses:
             face_img = lens.overlay(face_img, smoothed_landmarks_map)
 
-        print('Processed frame in {} sec'.format(time.time() - start_t))
+        print('.Processed frame in {} sec'.format(time.time() - start_t))
         return face_img

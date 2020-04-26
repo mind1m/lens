@@ -13,7 +13,7 @@ FRAME_STEP = 1 / 25  # sec
 def main():
     cam = open_cam()
     # send a list of lenses to apply to the Scene
-    scene = Scene([Dog3DLens])
+    scene = Scene([Ring3DLens])
     fps = FPSTracker()
 
     while True:
