@@ -3,12 +3,10 @@ import cv2
 from scene import Scene
 from lenses import GlassesLens, LightningLens, ClownNoseLens
 from cam_utils import open_cam, FPSTracker
-from lenses_3d import Cap3DLens, Ring3DLens, Dog3DLens
+from lenses_3d import Cap3DLens, Ring3DLens, Dog3DLens, Dog2_3DLens
 
 import time
 
-
-FRAME_STEP = 1 / 25  # sec
 
 def main():
     cam = open_cam()

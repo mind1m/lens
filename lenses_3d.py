@@ -30,15 +30,16 @@ class Panda3dApp(ShowBase):
         self._line(0, 5, 0, (0, 1, 0, 1))
         self._line(0, 0, 5, (1, 0, 0, 1))
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, no_head=False):
         ShowBase.__init__(self)
 
-        self.head = self.loader.loadModel('data/head.obj')
-        self.head.setColor(*CHROMAKEY)
-        self.head.reparentTo(self.render)
-        self.head.setPos(-4.1, 0, -7.5)
-        self.head.setScale(0.2)
-        self.head.setH(90)
+        if not no_head:
+            self.head = self.loader.loadModel('data/head.obj')
+            self.head.setColor(*CHROMAKEY)
+            self.head.reparentTo(self.render)
+            self.head.setPos(-4.1, 0, -7.5)
+            self.head.setScale(0.2)
+            self.head.setH(90)
 
         self.cam.reparentTo(self.render)
         self.cam.setPos(10, 0, 0)
@@ -54,7 +55,7 @@ class Panda3dApp(ShowBase):
         light.setColor((0.8, 0.8, 0.8, 1))
         self.light_np = self.render.attachNewNode(light)
         self.light_np.setPos(5, 0, 2)
-        if debug:
+        if debug and not no_head:
             self.head.setLight(self.light_np)
 
         alight = AmbientLight('alight')
@@ -66,11 +67,12 @@ class Base3DLens:
 
     RENDER_POSITION = (-1, 0, 1.5)  # 3d point that is used to blend to original image
     DEBUG = False
+    NO_HEAD = False
 
     def __init__(self):
         # loadPrcFileData("", "window-type offscreen" ) # Spawn an offscreen buffer
         self.debug = self.DEBUG
-        self.panda3d_app = Panda3dApp(self.debug)
+        self.panda3d_app = Panda3dApp(self.debug, self.NO_HEAD)
 
         self._prev_cam_pos = None
         self._prev_cam_target_pos = None
@@ -234,5 +236,21 @@ class Dog3DLens(Base3DLens):
         obj.setColorScale((212/256, 175/256, 55/256, 1))  # gold babe
         obj.setPos(-5, -1, -3)  # it is not centered by default
         obj.setScale(1.5)
+        obj.setH(90)
+        return obj
+
+
+class Dog2_3DLens(Base3DLens):
+
+    DEBUG = False
+    NO_HEAD = True
+
+    RENDER_POSITION = (-1, 0, 0.3)  # 3d point that is used to blend to original image
+
+    def get_lens_object(self):
+        obj = self.panda3d_app.loader.loadModel('data/dog2.obj')
+        obj.setColorScale((118/256, 57/256, 49/256, 1))  # gold babe
+        obj.setPos(-3, 0, -3)  # it is not centered by default
+        obj.setScale(0.2)
         obj.setH(90)
         return obj
